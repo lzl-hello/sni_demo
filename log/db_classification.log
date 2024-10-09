@@ -1,0 +1,26 @@
+2024-10-09 17:35:54,977 - db_classify_traffic - WARNING - SNI s1.hdslb.com 没有找到对应的 app_id。
+2024-10-09 17:35:54,977 - db_classify_traffic - DEBUG - 数据库连接已关闭。
+2024-10-09 17:35:55,148 - db_classify_traffic - DEBUG - SNI www.bilibili.com 对应的应用名称: 哔哩哔哩
+2024-10-09 17:35:55,149 - db_classify_traffic - DEBUG - 数据库连接已关闭。
+2024-10-09 17:35:55,988 - db_classify_traffic - WARNING - SNI le3-api.game.bilibili.com 没有找到对应的 app_id。
+2024-10-09 17:35:55,989 - db_classify_traffic - DEBUG - 数据库连接已关闭。
+2024-10-09 17:35:56,396 - db_classify_traffic - WARNING - SNI manga.bilibili.com 没有找到对应的 app_id。
+2024-10-09 17:35:56,396 - db_classify_traffic - DEBUG - 数据库连接已关闭。
+2024-10-09 17:35:57,276 - db_classify_traffic - DEBUG - SNI cm.bilibili.com 对应的应用名称: 哔哩哔哩
+2024-10-09 17:35:57,276 - db_classify_traffic - DEBUG - 数据库连接已关闭。
+2024-10-09 17:35:57,502 - db_classify_traffic - DEBUG - SNI cm.bilibili.com 对应的应用名称: 哔哩哔哩
+2024-10-09 17:35:57,502 - db_classify_traffic - DEBUG - 数据库连接已关闭。
+2024-10-09 17:35:58,041 - db_classify_traffic - WARNING - SNI i0.hdslb.com 没有找到对应的 app_id。
+2024-10-09 17:35:58,041 - db_classify_traffic - DEBUG - 数据库连接已关闭。
+2024-10-09 17:35:58,606 - db_classify_traffic - WARNING - SNI s1.hdslb.com 没有找到对应的 app_id。
+2024-10-09 17:35:58,606 - db_classify_traffic - DEBUG - 数据库连接已关闭。
+2024-10-09 17:35:59,710 - db_classify_traffic - WARNING - SNI s1.hdslb.com 没有找到对应的 app_id。
+2024-10-09 17:35:59,710 - db_classify_traffic - DEBUG - 数据库连接已关闭。
+2024-10-09 17:35:59,868 - db_classify_traffic - DEBUG - SNI api.bilibili.com 对应的应用名称: 哔哩哔哩
+2024-10-09 17:35:59,868 - db_classify_traffic - DEBUG - 数据库连接已关闭。
+2024-10-09 17:35:59,963 - db_classify_traffic - DEBUG - SNI api.bilibili.com 对应的应用名称: 哔哩哔哩
+2024-10-09 17:35:59,963 - db_classify_traffic - DEBUG - 数据库连接已关闭。
+2024-10-09 17:36:00,488 - db_classify_traffic - WARNING - SNI nav-edge.smartscreen.microsoft.com 没有找到对应的 app_id。
+2024-10-09 17:36:00,488 - db_classify_traffic - DEBUG - 数据库连接已关闭。
+2024-10-09 17:36:00,950 - db_classify_traffic - WARNING - SNI passport.bilibili.com 没有找到对应的 app_id。
+2024-10-09 17:36:00,950 - db_classify_traffic - DEBUG - 数据库连接已关闭。
