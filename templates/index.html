@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>实时流量监控</title>
+    <!-- 引入 Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- 引入 Socket.IO 客户端 v4.5.4 -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <!-- 引入 Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .card { margin-bottom: 20px; }
+        .card-header { cursor: pointer; }
+        .collapse.show { background-color: #f8f9fa; }
+        .chart-container { position: relative; height: 200px; width: 100%; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-4">实时流量监控</h1>
+
+        <h2 class="mb-3">子线程统计数据</h2>
+        <div id="worker-data">
+            <!-- 子线程统计数据将动态填充在这里 -->
+        </div>
+    </div>
+
+    <!-- 引入 Bootstrap JS 和依赖 -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        // 建立与服务器的 Socket.IO 连接
+        var socket = io();
+
+        // 存储 Chart 实例
+        var charts = {};
+
+        // 接收来自后端的 'update' 事件数据
+        socket.on('update', function(data) {
+
+            console.log('接收到的数据:', data);  // 添加调试日志
+
+            if (data.workers) {
+                var workerDiv = document.getElementById('worker-data');
+
+                // 遍历每个子线程的数据
+                for (var app in data.workers) {
+                    if (data.workers.hasOwnProperty(app)) {
+                        var appData = data.workers[app];
+                        var collapseId = `collapse-${app.replace(/\s+/g, '-')}`;
+                        var chartId = `chart-${app.replace(/\s+/g, '-')}`;
+
+                        // 查找是否已存在卡片
+                        var existingCard = document.getElementById(collapseId);
+                        if (!existingCard) {
+                            // 如果卡片不存在，创建一个新的卡片
+                            var card = document.createElement('div');
+                            card.className = 'card';
+
+                            // 创建卡片头部
+                            var cardHeader = document.createElement('div');
+                            cardHeader.className = 'card-header';
+                            cardHeader.setAttribute('data-toggle', 'collapse');
+                            cardHeader.setAttribute('data-target', `#${collapseId}`);
+                            cardHeader.setAttribute('aria-expanded', 'false');
+                            cardHeader.setAttribute('aria-controls', collapseId);
+                            cardHeader.textContent = `应用名称: ${app}`;
+                            card.appendChild(cardHeader);
+
+                            // 创建折叠面板
+                            var collapseDiv = document.createElement('div');
+                            collapseDiv.id = collapseId;
+                            collapseDiv.className = 'collapse';
+
+                            // 创建卡片体
+                            var cardBody = document.createElement('div');
+                            cardBody.className = 'card-body';
+
+                            // 创建统计数据表格
+                            var table = document.createElement('table');
+                            table.className = 'table table-bordered table-sm';
+
+                            var thead = document.createElement('thead');
+                            var headerRow = document.createElement('tr');
+                            ['Flow Tuple', 'App Name', 'Packet Count', 'Bytes', 'Current Packet Size', 'Time Since Last Packet'].forEach(function(headerText) {
+                                var th = document.createElement('th');
+                                th.textContent = headerText;
+                                headerRow.appendChild(th);
+                            });
+                            thead.appendChild(headerRow);
+                            table.appendChild(thead);
+
+                            var tbody = document.createElement('tbody');
+                            tbody.id = `tbody-${app}`;
+                            table.appendChild(tbody);
+
+                            cardBody.appendChild(table);
+
+                            // 创建图表容器
+                            var chartContainer = document.createElement('div');
+                            chartContainer.className = 'chart-container';
+                            var chartCanvas = document.createElement('canvas');
+                            chartCanvas.id = chartId;
+                            chartContainer.appendChild(chartCanvas);
+                            cardBody.appendChild(chartContainer);
+
+                            collapseDiv.appendChild(cardBody);
+                            card.appendChild(collapseDiv);
+
+                            workerDiv.appendChild(card);
+
+                            // 初始化图表
+                            var ctx = chartCanvas.getContext('2d');
+                            charts[app] = new Chart(ctx, {
+                                type: 'line',
+                                data: {
+                                    labels: [],
+                                    datasets: [
+                                        {
+                                            label: 'Packet Count',
+                                            data: [],
+                                            borderColor: 'rgba(75, 192, 192, 1)',
+                                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                            fill: false
+                                        },
+                                        {
+                                            label: 'Bytes',
+                                            data: [],
+                                            borderColor: 'rgba(255, 99, 132, 1)',
+                                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                                            fill: false
+                                        }
+                                    ]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    scales: {
+                                        x: {
+                                            title: {
+                                                display: true,
+                                                text: 'Packet Number'
+                                            }
+                                        },
+                                        y: {
+                                            title: {
+                                                display: true,
+                                                text: 'Value'
+                                            },
+                                            beginAtZero: true
+                                        }
+                                    }
+                                }
+                            });
+                        }
+
+                        // 更新表格内容
+                        var tableBody = document.getElementById(`tbody-${app}`);
+                        tableBody.innerHTML = ''; // 清空现有的表格行
+
+                        var tr = document.createElement('tr');
+                        ['flow_tuple', 'app_name', 'packet_count', 'bytes', 'current_packet_size', 'time_since_last_packet'].forEach(function(key) {
+                            var td = document.createElement('td');
+                            td.textContent = appData[key];
+                            tr.appendChild(td);
+                        });
+                        tableBody.appendChild(tr);
+
+                        // 更新图表数据
+                        var history = data.history[app];
+                        if (history && charts[app]) {
+                            charts[app].data.labels = history.packet_count.map((_, index) => index + 1);
+                            charts[app].data.datasets[0].data = history.packet_count;
+                            charts[app].data.datasets[1].data = history.bytes;
+                            charts[app].update();
+                        }
+                    }
+                }
+            }
+        });
+
+        // 监控连接状态
+        socket.on('connect', function() {
+            console.log('Socket.IO connected');
+        });
+
+        socket.on('disconnect', function(reason) {
+            console.log('Socket.IO disconnected:', reason);
+        });
+
+        // 处理连接错误
+        socket.on('connect_error', function(error) {
+            console.error('Socket.IO connection error:', error);
+        });
+
+    </script>
+</body>
+</html>

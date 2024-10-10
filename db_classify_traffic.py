@@ -24,6 +24,16 @@ db_config = {
     'port': '5432'
 }
 
+# SQL 语句模板
+SELECT_UNMATCHED_SNI_SQL = """
+SELECT 1 FROM unmatched_sni_records WHERE sni = %s
+"""
+
+INSERT_UNMATCHED_SNI_SQL = """
+INSERT INTO unmatched_sni_records (sni, app_name)
+VALUES (%s, %s)
+"""
+
 # 从数据库中分类流量
 def classify_traffic_from_db(sni, protocol):
     try:
@@ -52,6 +62,8 @@ def classify_traffic_from_db(sni, protocol):
                     return "Unknown App Traffic", "Unknown App"
             else:
                 logger.warning(f"SNI {sni} 没有找到对应的 app_id。")
+                # 插入未匹配的 SNI 记录
+                insert_unmatched_sni(sni)
                 return "Other SNI Traffic", "Other SNI"
         else:
             # 如果没有 SNI，根据协议分类
@@ -77,3 +89,33 @@ def classify_traffic_from_db(sni, protocol):
             logger.debug("数据库连接已关闭。")
         except Exception as e:
             logger.error(f"Error closing database connection: {e}")
+
+
+def insert_unmatched_sni(sni):
+    """
+    插入未匹配的 SNI 记录到 unmatched_sni_records 表中，如果该 SNI 尚未存在。
+
+    :param sni: 未匹配的 Server Name Indication
+    """
+    if not sni:
+        logger.warning("尝试插入空的 SNI。")
+        return
+
+    try:
+        with psycopg2.connect(**db_config) as conn:
+            with conn.cursor() as cursor:
+                # 检查 SNI 是否已存在
+                cursor.execute(SELECT_UNMATCHED_SNI_SQL, (sni,))
+                exists = cursor.fetchone()
+
+                if not exists:
+                    # 插入新记录
+                    cursor.execute(INSERT_UNMATCHED_SNI_SQL, (sni, "unknown"))
+                    conn.commit()
+                    logger.debug(f"已插入未匹配的 SNI 记录: SNI='{sni}', app_name='unknown'")
+                else:
+                    logger.debug(f"SNI '{sni}' 已存在于 unmatched_sni_records 表中，无需重复插入。")
+    except psycopg2.Error as db_err:
+        logger.error(f"插入未匹配的 SNI 记录时数据库错误: {db_err}")
+    except Exception as e:
+        logger.error(f"插入未匹配的 SNI 记录时发生错误: {e}")

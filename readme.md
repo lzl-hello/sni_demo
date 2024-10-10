@@ -41,23 +41,22 @@
 6. **数据存储**
    - 将处理后的流量数据保存到CSV文件中，便于持久存储和后续分析。
 
-7. **优雅关闭**
-   - 处理系统中断（如Ctrl+C），确保所有捕获的数据被保存，并在退出前正确释放资源。
-
-8. **错误处理**
-   - 通过健壮的错误处理机制，管理意外问题，如缺失的协议层或数据库连接问题，避免程序崩溃。
+7. **前端展示**
+   - 完成了简单的统计信息展示，从csv中提取数据展示在页面中
 
 ### 待实现的功能
 
-1. **实时数据可视化**
-   - 集成可视化工具，实时展示流量统计和趋势，进行前端页面展示
+重要功能：
+1. **前端页面美化**
+   - 前端页面初步展示已完成，需要美化页面样式和布局，增加更多交互功能。
 
 2. **数据库集成增强**
-   - 支持更多数据库和更复杂的分类逻辑；支持更多应用的sni分类。
+   - 支持更多数据库和更复杂的分类逻辑；支持更多应用的sni分类。人工标记和自动分类的结合。
 
 3. **子线程流量包统计处理**
-   - 目前只是写了简单的数量统计，后续需要加更多功能，如流量包大小统计、流量包时间统计等。
+   - 目前只是写了简单的数量统计，后续需要加更多功能。
 
+其他功能：
 4. **警报系统**
    - 实现警报机制，通知管理员可疑或高优先级的流量模式。
 
@@ -88,6 +87,11 @@
    - **问题**：日志文件重复记录或不同模块的日志混淆不清。
    - **解决方案**：为每个模块（`network_capture`、`worker_thread`、`db_classify_traffic`）配置独立的日志记录器，确保日志的分离和清晰。
 
+5. **flask_socketio主动调用emit/send发送消息失败解决（伪同步flask上下文）**
+   - **问题**：前端页面接收不到传来的数据。
+   - **解决方案**：采用 flask_socketio 提供的 background 运行 + 队列 flush 法。
+   - **参考**：https://blog.csdn.net/qq_21567385/article/details/120803123
+
 ## 安装指南
 
 ### 前提条件
@@ -97,7 +101,7 @@
   - 确保已安装 `tshark` 并添加到系统的PATH中。
   
 - **PostgreSQL数据库**
-  - 需要一个运行中的PostgreSQL实例，并创建必要的表（`app_sni` 和 `app_protocol`）用于流量分类。
+  - 需要一个运行中的PostgreSQL实例，并创建必要的表（`app_sni` 、 `app_protocol`、 `unmatched_sni_record`）用于流量分类。
 
 
 ## 项目结构
@@ -107,17 +111,25 @@ network-traffic-sni-capture/
 ├── db_classify_traffic.py      # 用于通过数据库分类流量的模块
 ├── worker_thread.py            # 管理工作线程处理流量的模块
 ├── network_capture.py          # 主脚本，用于捕获和处理网络流量
+├── monitoring_server.py        # flask主程序
 ├── requirements.txt            # Python依赖包
 ├── README.md                   # 项目文档
+├── templates/                  # 前端页面
+│   └── index.html
 ├── log/                        # 日志文件目录
 │   ├── network_capture.log
 │   ├── worker_threads.log
-│   └── db_classification.log
+│   ├── db_classification.log
+│   └── monitoring.log
 ├── output/                     # 输出CSV文件目录
 │   ├── network_traffic.csv
 │   ├── HTTP_statistics.csv
 │   └── Unclassified_statistics.csv
-├── back/                     # 简单的备份代码
+├── db/                         # 数据库相关目录
+│   ├── app_sni.sql
+│   ├── app_protocol.sql
+│   └── readme.md
+├── back/                       # 简单的备份代码
 └── pcap/                       # （已移除）之前用于存储PCAP文件的目录
 ```
 
@@ -127,6 +139,7 @@ network-traffic-sni-capture/
   - `network_capture.log`：主网络捕获和处理相关的日志。
   - `worker_threads.log`：每个工作线程处理特定流量类别的日志。
   - `db_classification.log`：数据库交互和流量分类相关的日志。
+  - `monitoring.log`：前端页面展示相关的日志。
 
 - **日志级别：**
   - **DEBUG：** 用于诊断问题的详细信息。

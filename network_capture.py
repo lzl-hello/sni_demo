@@ -17,6 +17,7 @@ import csv
 from queue import Queue, Empty
 from collections import defaultdict
 from matplotlib import font_manager
+from pyshark.capture.capture import TSharkCrashException
 
 from db_classify_traffic import classify_traffic_from_db
 from worker_thread import WorkerThread
@@ -74,8 +75,12 @@ def csv_writer(queue, csv_file, columns, stop_event):
             except Exception as e:
                 logger.error(f"写入CSV时出错: {e}")
 
-# 初始化数据存储的列
-columns = ['Timestamp', 'Source IP', 'Destination IP', 'Source Port', 'Destination Port', 'Protocol', 'SNI', 'Category']
+# 初始化数据存储的列，包括新的特征
+columns = [
+    'Timestamp', 'Source IP', 'Destination IP', 'Source Port',
+    'Destination Port', 'Protocol', 'SNI', 'Category',
+    'Packet Size', 'Time Since Last Packet'
+]
 
 # 创建停止事件
 stop_event = threading.Event()
@@ -95,6 +100,11 @@ tuple_to_thread = {}
 # 定义超时时间（秒）
 THREAD_TIMEOUT = 60
 
+# 维护每个流的最后一个包时间戳
+flow_last_time = defaultdict(float)
+# 锁用于保护 flow_last_time
+flow_time_lock = threading.Lock()
+
 # 事件用于优雅关闭
 shutdown_event = threading.Event()
 
@@ -109,20 +119,8 @@ def normalize_flow_tuple(src_ip, src_port, dst_ip, dst_port):
 
 def packet_callback(packet):
     try:
-        # logger.debug("处理一个新的数据包。")
-        # timestamp = datetime.datetime.fromtimestamp(float(packet.sniff_timestamp)).strftime('%Y-%m-%d %H:%M:%S')
-        #
-        # src_ip = packet.ip.src
-        # dst_ip = packet.ip.dst
-        # src_port = packet[packet.transport_layer].srcport
-        # dst_port = packet[packet.transport_layer].dstport
-        # protocol = packet.transport_layer.upper()
         logger.debug("处理一个新的数据包。")
         timestamp = datetime.datetime.fromtimestamp(float(packet.sniff_timestamp)).strftime('%Y-%m-%d %H:%M:%S')
-
-        # 记录所有可用的协议层
-        layer_names = [layer.layer_name for layer in packet.layers]
-        logger.debug(f"Available layers: {layer_names}")
 
         # 检查是否存在 'IP' 层
         if 'IP' not in packet:
@@ -147,6 +145,22 @@ def packet_callback(packet):
         dst_port = transport.dstport
         protocol = transport_layer.upper()
 
+        # 提取包级别特征
+        packet_size = int(packet.length)
+
+        # 标准化四元组
+        flow_tuple = normalize_flow_tuple(src_ip, src_port, dst_ip, dst_port)
+
+        # 计算 time_since_last_packet
+        with flow_time_lock:
+            last_time = flow_last_time.get(flow_tuple, None)
+            current_time = time.time()
+            if last_time is not None:
+                time_since_last_packet = current_time - last_time
+            else:
+                time_since_last_packet = 0.0  # 第一个包
+            flow_last_time[flow_tuple] = current_time
+
         # 尝试提取 SNI
         sni = None
         if 'tls' in packet:
@@ -170,12 +184,13 @@ def packet_callback(packet):
             logger.debug(f"没有提取到SNI，分配默认类别: Category={category}, App Name={app_name}")
 
         # 添加到数据列表并写入CSV
-        row = [timestamp, src_ip, dst_ip, src_port, dst_port, protocol, sni if sni else '', category]
+        row = [
+            timestamp, src_ip, dst_ip, src_port, dst_port,
+            protocol, sni if sni else '', category,
+            packet_size, round(time_since_last_packet, 6)
+        ]
         csv_queue.put(row)
         logger.debug(f"数据包信息已加入CSV队列: {row}")
-
-        # 标准化四元组
-        flow_tuple = normalize_flow_tuple(src_ip, src_port, dst_ip, dst_port)
 
         # 分发到子线程
         dispatch_packet({
@@ -188,7 +203,9 @@ def packet_callback(packet):
             'sni': sni,
             'category': category,
             'app_name': app_name,
-            'length': int(packet.length) if hasattr(packet, 'length') else 0
+            'length': packet_size,
+            'time_since_last_packet': time_since_last_packet,
+            'flow_tuple': flow_tuple  # 添加 flow_tuple 到 packet_info
         })
 
     except KeyboardInterrupt:
@@ -198,7 +215,6 @@ def packet_callback(packet):
         logger.error(f"AttributeError: {e}")
     except Exception as e:
         logger.error(f"Error processing packet: {e}")
-
 
 def dispatch_packet(packet_info):
     app_name = packet_info['app_name']
@@ -310,6 +326,9 @@ async def capture_packets():
 
     try:
         await capture.apply_on_packets(packet_callback)
+    except TSharkCrashException as e:
+        logger.error(f"TShark 崩溃: {e}")
+        shutdown_event.set()
     except asyncio.CancelledError:
         logger.info("捕获任务被取消。")
     except Exception as e:
