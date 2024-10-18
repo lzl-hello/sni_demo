@@ -1,3 +1,4 @@
+      
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -30,8 +31,9 @@
             justify-content: center;
             align-items: center;
             background-image:none;
-            background-color = azure;
+            background-color:azure;
             color:#007bff;
+            font-weight: bold;
         }
         
         /* Centered Content Container */
@@ -178,6 +180,8 @@
             margin-inline-start: 0px;
             margin-inline-end: 0px;
             text-align: center;
+            font-weight:bold;
+            padding-top:200px;
         }
 
         .card {
@@ -204,10 +208,10 @@
             padding: 15px;
             font-weight: bold;
             font-size: 18px;
-            color: #4a4453;
+
         }
         .card-header:hover{
-            color:#0000CD;
+            color:#007bff;
         }
         table {
             /*background: rgba(254, 249, 242, 1);*/
@@ -244,7 +248,7 @@
             height: auto;
             mask-image: linear-gradient(to top right, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.4) 30%,  rgba(0, 0, 0, 0.1) 60%, rgba(0, 0, 0, 0) 100%);
            -webkit-mask-image: linear-gradient(to top right, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.3) 20%, rgba(0, 0, 0, 0.1) 30%, rgba(0, 0, 0, 0) 60%);
-        
+        }
         
     </style>
 </head>
@@ -252,7 +256,7 @@
     <nav>
         <a href="https://github.com/lzl-hello/sni_demo" target="_blank">contact us</a>
         <a href="https://github.com/lzl-hello/sni_demo/issues" target="_blank">Issue</a>
-        <a href="https://github.com/lzl-hello/sni_demo/blob/master/readme.md">readme</a>
+        <a href="https://github.com/lzl-hello/sni_demo/blob/master/readme.md" target="_blank">readme</a>
         <a href="#">Go Pro</a>
        
     </nav>
@@ -494,7 +498,17 @@
                 }
             }
         });
-        
+        document.querySelectorAll('.card-header').forEach(function(header) {
+            header.addEventListener('click', function(e) {
+                const currentScroll = window.scrollY; // Get the current scroll position
+    
+                // Allow the default toggle action for the collapse behavior
+                setTimeout(function() {
+                    // After the card collapses/expands, scroll back to the previous position
+                    window.scrollTo(0, currentScroll);
+                }, 300); // Adjust the delay to match the animation duration
+            });
+        });
         
         
 
@@ -514,3 +528,5 @@
     <link href="https://fonts.googleapis.com/css?family=Montserrat:400,900" rel="stylesheet">
 </body>
 </html>
+
+    
