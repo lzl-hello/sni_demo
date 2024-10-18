@@ -1,36 +1,34 @@
 # monitoring_server.py
 
-import atexit
-import csv
-from logging.handlers import RotatingFileHandler
-import os
-import subprocess
-import threading
 import eventlet
 eventlet.monkey_patch()
 
-from flask import Flask, jsonify, render_template
+from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
+import csv
 import time
+import threading
+import os
 import logging
 from collections import defaultdict
+import json
+from logging.handlers import RotatingFileHandler
 import queue
 
-
-# 配置常量
-__MSG_TRANSFER_EVENT__ = 'update'
-__BOT_NAMESPACE__ = '/'
-__SOCKET_PORT__ = 5000
-__SOCKET_HOST__ = '0.0.0.0'
+# 配置常量（请根据实际情况修改）
+__MSG_TRANSFER_EVENT__ = 'update'  # 事件名称
+__BOT_NAMESPACE__ = '/'  # 命名空间，默认为根命名空间
+__SOCKET_PORT__ = 5000  # 服务器端口
+__SOCKET_HOST__ = '0.0.0.0'  # 服务器主机
 
 # 初始化 Flask 应用和 SocketIO
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
-socketio = SocketIO(app, async_mode='eventlet')
+socketio = SocketIO(app, async_mode='eventlet')  # 使用 eventlet 作为异步模式
 
 # 设置日志记录器
 logger = logging.getLogger('monitoring_server')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.DEBUG)  # 设置日志级别
 
 # 创建一个文件处理器，日志文件名为 'monitoring.log'
 log_file = './log/monitoring.log'
@@ -47,55 +45,33 @@ logger.addHandler(file_handler)
 # 移除根记录器的 StreamHandler，避免日志输出到控制台
 logging.getLogger().handlers = [handler for handler in logging.getLogger().handlers if not isinstance(handler, logging.StreamHandler)]
 
-# 全局变量
-is_monitoring = False
 # 主 CSV 文件路径
 MAIN_CSV = './output/network_traffic.csv'
 
+# 子线程统计 CSV 文件所在目录
 WORKER_CSV_DIR = './output/'
 
+# 读取 CSV 的时间间隔（秒）
 READ_INTERVAL = 5
 
+# 存储上次读取的主 CSV 行数
 last_main_csv_line = 0
 
+# 存储每个子线程的上次读取行数
 last_worker_csv_lines = {}
 
+# 存储历史数据
 history_worker_data = defaultdict(lambda: {'packet_count': [], 'bytes': []})
 
+# 维护一个全局消息队列
 msg_queue = queue.Queue()
 
 @app.route('/')
 def index():
     logger.debug("Rendering index.html")
-    return render_template('index.html')
+    return render_template('index.html')  # 确保 index.html 在 templates/ 目录下
 
-process = None 
-
-@app.route('/start_monitor', methods=['POST'])
-def start_monitor():
-    """启动监控"""
-    global is_monitoring, process
-    if not is_monitoring:
-        is_monitoring = True
-        # 启动另一个 Python 文件作为子进程
-        process = subprocess.Popen(['python', './network_capture.py'])
-        logger.info("------ Started network_capture.py. ------")
-        print(process)
-    return jsonify({"status": "started"})
-
-@app.route('/stop_monitor', methods=['POST'])
-def stop_monitor():
-    """停止监控"""
-    global is_monitoring, process
-    if is_monitoring and process:
-        # 终止子进程
-        process.terminate()
-        process = None  # 清空 process 引用
-    is_monitoring = False
-    logger.info("------ End network_capture.py. ------")
-    return jsonify({"status": "stopped"})
-
-def read_worker_csv():
+def read_main_csv():
     global last_main_csv_line
     data = []
     if os.path.isfile(MAIN_CSV):
@@ -165,9 +141,36 @@ def defaultdict_to_dict(d):
         d = {k: defaultdict_to_dict(v) for k, v in d.items()}
     return d
 
+def flush_queue():
+    while not msg_queue.empty():
+        msg = msg_queue.get()
+        try:
+            # 执行业务发送逻辑，此处可以正确获取上下文
+            socketio.emit(__MSG_TRANSFER_EVENT__, msg, namespace=__BOT_NAMESPACE__)
+            logger.debug(f"发送消息到客户端: {msg}")
+        except Exception as e:
+            logger.error(f"发送消息失败: {e}")
+
+def handle_queue():
+    while True:
+        flush_queue()
+        socketio.sleep(1)  # 使用 socketio.sleep 而不是 time.sleep
+
+@socketio.on("disconnect", namespace=__BOT_NAMESPACE__)
+def disconnect():
+    global is_connect
+    is_connect = False
+    logger.info("connect disabled!!")
+
+@socketio.on("connect", namespace=__BOT_NAMESPACE__)
+def connect():
+    global is_connect
+    is_connect = True
+    logger.info("connect enabled!")
+    # 启动后台任务处理消息队列
+    socketio.start_background_task(target=handle_queue)
+
 def background_thread():
-    """后台线程，用于模拟数据读取并通过Socket.IO发送"""
-    # global is_monitoring
     while True:
         try:
             # 读取子线程统计数据
@@ -184,53 +187,11 @@ def background_thread():
             logger.error(f"后台线程出现异常: {e}")
         time.sleep(READ_INTERVAL)
 
-def flush_queue():
-    while not msg_queue.empty():
-        msg = msg_queue.get()
-        try:
-            # 执行业务发送逻辑，此处可以正确获取上下文
-            socketio.emit(__MSG_TRANSFER_EVENT__, msg, namespace=__BOT_NAMESPACE__)
-            logger.debug(f"发送消息到客户端: {msg}")
-        except Exception as e:
-            logger.error(f"发送消息失败: {e}")
-            
-def handle_queue():
-    """处理消息队列，将消息发送给前端"""
-    while True:
-        while not msg_queue.empty():
-            msg = msg_queue.get()
-            socketio.emit(__MSG_TRANSFER_EVENT__, msg, namespace=__BOT_NAMESPACE__)
-            logger.debug(f"发送消息到客户端: {msg}")
-        socketio.sleep(1)
-
-@socketio.on("connect", namespace=__BOT_NAMESPACE__)
-def connect():
-    logger.info("Client connected")
-    socketio.start_background_task(target=handle_queue)
-
-@socketio.on("disconnect", namespace=__BOT_NAMESPACE__)
-def disconnect():
-    logger.info("Client disconnected")
-
-def cleanup():
-    """在服务器结束时终止子进程"""
-    global process
-    if process:
-        process.terminate()
-        logger.info("Network_capture.py terminated during server shutdown.")
-        process = None
-
-# 注册 cleanup 函数，使其在程序退出时执行
-atexit.register(cleanup)
-
-
 if __name__ == '__main__':
-
+    # 启动后台线程
     thread = threading.Thread(target=background_thread)
     thread.daemon = True
-    
     thread.start()
     logger.debug("后台线程已启动。")
-    
-    socketio.run(app, host=__SOCKET_HOST__, port=__SOCKET_PORT__)
-    
+    # 运行 Flask 应用
+    socketio.run(app, host=__SOCKET_HOST__, port=__SOCKET_PORT__, debug=True, use_reloader=False)

@@ -3,191 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>实时流量监控 - 可用，样式待修改</title>
+    <title>实时流量监控</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body, html {
             height: 100%;
-            width:100%;
             margin: 0;
-            font-family: 'Montserrat', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: #fff;
-            background-image: linear-gradient(to right top, #6d327c, #485DA6, #00a1ba, #00BF98, #36C486);
+            font-family: Arial, sans-serif;
+            background-color:#fadbd8;
+            background-size: cover;
+            background-blend-mode: overlay;
+            background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('../static/start-bg.jpeg');
+            background-repeat: no-repeat;
             background-attachment: fixed;
-            overflow-y:auto;
-        }
-        #body.in{
-            height: 100%;
-            width:100%;
-            margin: 0;
-            font-family: 'Montserrat', sans-serif;
+            color: #fff;
             display: flex;
             justify-content: center;
             align-items: center;
-            background-image:none;
-            background-color = azure;
-            color:#007bff;
+            overflow: auto;
         }
-        
-        /* Centered Content Container */
-        .centered-content {
-            text-align: center;
-            position: relative;
-            max-width: 1200px;
-            margin-top:-350px;
+        h1{
+            color:black;
         }
-
-        .centered-content h1 {
-            font-size: 36px;
-            font-weight: bold;
-        }
-
-        .centered-content p {
-            font-size: 18px;
-            margin-top: 10px;
-        }
-        .arrow {
-            display: inline-block;
-            margin-top: 30px;
-            margin-bottom:50px;
-            border: solid #fff;
-            border-width: 0 4px 4px 0;
-            padding: 10px;
-            transform: rotate(45deg);
-            animation: bounce 1s infinite;
-        }
-        @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% {
-                transform: translateY(0) rotate(45deg);
-            }
-            40% {
-                transform: translateY(-10px) rotate(45deg);
-            }
-            60% {
-                transform: translateY(-5px) rotate(45deg);
-            }
-        }
-        #start-button,#end-button{
-            border:none;
-            display: block;
-            position: relative;
-            border-radius: 50px;
-            background: #D91656;
-            width: 380px;
-            height: 50px;
-            position: relative;
-            color: #fff;
-            font-size: 0.97em;
-            letter-spacing: 0.094em;
-            cursor: pointer;
-            -webkit-box-shadow: 10px 10px 14px 1px rgba(00, 00, 00, 0.2);
-            box-shadow: 10px 10px 14px 1px rgba(00, 00, 00, 0.2);
-            text-align: center;
-            margin: 0 auto;
-            -webkit-transition: all 0.5s;
-            -o-transition: all 0.5s;
-            transition: all 0.5s;
-            text-transform: uppercase;
-        }
-        
-        #start-button:hover ,#end-button:hover{
-            /*background: linear-gradient(45deg, #16a085, #229954);*/
-            box-shadow: none;
-        }
-
-        nav {
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            padding: 15px 20px;
-            /*background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1));*/
-            background: rgba(255, 255, 255, 0.3);
-            width: 100%;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            /*position: absolute;*/
-            position:fixed;
-            top: 0;
-            backdrop-filter: blur(10px);
-            z-index: 10;
-        }
-        nav a {
-            position: relative;
-            color: #FFFFFF;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 18px;
-            text-transform: uppercase;
-            margin: 0 15px;
-            padding: 5px 0;
-            transition: color 0.3s ease;
-        }
-
-        nav a:hover {
-            color: #D91656;
-            text-decoration:none;
-        }
-        nav a::before, nav a::after {
-            content: '';
+        /* 模糊背景遮罩 */
+        #background-overlay {
             position: absolute;
-            height: 3px;
-            width: 0;
-            bottom: 0;
-            background: #D91656;
-            transition: width 0.4s ease-in-out;
-        }
-        
-        nav a::before {
+            top: 0;
             left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: -1;
         }
-        
-        nav a::after {
-            right: 0;
-        }     
-        nav a:hover::before, nav a:hover::after {
-            width: 50%;
+
+        /* 主题色按钮 */
+        #start-button, #end-button {
+            padding: 15px 50px;
+            font-size: 22px;
+            font-weight: bold;
+            color: #ffffff;
+            background-color:#0000CD;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-bottom: 15px;
         }
-      
+
+        #start-button:hover, #end-button:hover {
+            background: linear-gradient(45deg,#16a085, #229954);
+        }
+
         #monitor-screen, #start-screen {
             display: none;
             z-index: 1;
         }
         
-        #start-screen.active {
+        #start-screen.active, #monitor-screen.active {
             display: block;
-        }
-        #monitor-screen.active{
-            display: block;
-            max-height: 100%;
-            box-sizing: border-box;
-            margin-top: -200px;
         }
 
         .container { max-width: 1200px; }
-        .table-container{
-            text-align:center;
-        }
-        .mb-4{
-            font-family: 'Montserrat', sans-serif;
-            margin-block-start: 0.67em;
-            margin-block-end: 0.67em;
-            margin-inline-start: 0px;
-            margin-inline-end: 0px;
-            text-align: center;
-        }
 
+        /* 炫彩卡片样式 */
         .card {
-            width: 1100px;
             margin-bottom: 20px;
-            /*background-color:#f4f6f6;*/
-            background-color:rgba(254, 249, 242, 0.5);
-            color: #4a4453;
+            background-color:#fcf3cf;
+            color: #880e4f;
             border-radius: 12px;
-            /*padding: 15px;*/
+            padding: 15px;
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
             overflow: hidden;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -204,84 +90,41 @@
             padding: 15px;
             font-weight: bold;
             font-size: 18px;
-            color: #4a4453;
+            color: #880e4f;
         }
-        .card-header:hover{
-            color:#0000CD;
-        }
+
+        /* 炫彩表格 */
         table {
-            /*background: rgba(254, 249, 242, 1);*/
+            background: rgba(255, 255, 255, 0.1);
             border:none;
             color: #fff;
             width: 100%;
         }
 
-       /* table th, table td {
+        table th, table td {
             padding: 10px;
-            border: 1px solid rgba(255, 227, 227, 1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
             text-align: center;
-        }*/
-        .table thead th ,.table-bordered td, .table-bordered th {
-            border: 1px solid rgba(255, 227, 227, 1);
-            padding: 10px;
         }
+
+        /* 图表容器样式 */
         .chart-container {
             position: relative;
             height: 200px;
             width: 100%;
             margin-top: 15px;
         }
-        #bg-left {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%; /* Adjust as needed */
-            opacity: 1;
-        }
-        
-        #bg-left img {
-            width: 100%;
-            height: auto;
-            mask-image: linear-gradient(to top right, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.4) 30%,  rgba(0, 0, 0, 0.1) 60%, rgba(0, 0, 0, 0) 100%);
-           -webkit-mask-image: linear-gradient(to top right, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.3) 20%, rgba(0, 0, 0, 0.1) 30%, rgba(0, 0, 0, 0) 60%);
-        
-        
     </style>
 </head>
-<body id="body"> 
-    <nav>
-        <a href="https://github.com/lzl-hello/sni_demo" target="_blank">contact us</a>
-        <a href="https://github.com/lzl-hello/sni_demo/issues" target="_blank">Issue</a>
-        <a href="https://github.com/lzl-hello/sni_demo/blob/master/readme.md">readme</a>
-        <a href="#">Go Pro</a>
-       
-    </nav>
-    <div id="bg-left" class="fade box astro left" style="opacity: 1;">
-        <img src="../static/bg-1.jpg" alt="color scheme left">
-    </div>
-    <!--
-    <div id="bg-right" class="fade box astro right" style="opacity: 1;">
-        <img src="../static/svg-1.svg" alt="color palettes right">
-    </div>
-    -->
-    <!-- Centered Content -->
+<body>
     <div id="start-screen" class="active">
-        <div class="centered-content" id="centered-content">
-            <h1>Discover the World's Real-Time Monitoring Data</h1>
-            <p>Explore insights and statistics in real-time for better decision-making.</p>
-            <!-- Arrow -->
-            <div class="arrow"></div>
-        <!-- Start Monitoring Button -->
-       
-            <button id="start-button">Start Monitoring !</button>
-        
-        </div>
+        <button id="start-button">Start Monitoring !</button>
     </div>
-    
 
     <div id="monitor-screen">
         <div class="container">
             <h1 class="mb-4">实时流量监控信息展示</h1>
+            <!--<h2 class="mb-3">子线程统计数据</h2>-->
             <div id="worker-data" class="table-container">
                 <!-- 子线程统计数据将动态填充在这里 -->
             </div>
@@ -290,7 +133,6 @@
         
         
     </div>
-
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
@@ -309,22 +151,13 @@
 
         // Start按钮点击事件
         document.getElementById('start-button').addEventListener('click', function() {
-            // document.getElementById('centered-content').style.display = 'none';
             console.log("Click start!")
             fetch('/start_monitor', { method: 'POST' })
                 .then(response => response.json())
                 .then(data => {
-                    console.log("start-button data:",data)
                     if (data.status === "started") {
                         document.getElementById('start-screen').classList.remove('active');
                         document.getElementById('monitor-screen').classList.add('active');
-                        document.getElementById('bg-left').style.visibility = 'hidden';
-                        document.getElementById("body").classList.add('in');
-
-                        const navLinks = document.querySelectorAll('nav a');
-                        navLinks.forEach(link => {
-                            link.style.color = "#007bff"; 
-                        });
                         socket.connect();
                     }
                 })
@@ -336,17 +169,10 @@
             fetch('/stop_monitor', { method: 'POST' })
                 .then(response => response.json())
                 .then(data => {
-                    console.log("end-button data:",data)
                     if (data.status === "stopped") {
                         socket.disconnect();
                         document.getElementById('monitor-screen').classList.remove('active');
                         document.getElementById('start-screen').classList.add('active');
-                        document.getElementById('bg-left').style.visibility= 'visible';
-                        document.getElementById("body").classList.remove('in');
-                        const navLinks = document.querySelectorAll('nav a');
-                        navLinks.forEach(link => {
-                            link.style.color = "#fff"; 
-                        });
                     }
                 })
                 .catch(error => console.error("Failed to stop monitor:", error));
@@ -380,7 +206,7 @@
                             cardHeader.setAttribute('data-target', `#${collapseId}`);
                             cardHeader.setAttribute('aria-expanded', 'false');
                             cardHeader.setAttribute('aria-controls', collapseId);
-                            cardHeader.textContent = `${app}`;
+                            cardHeader.textContent = `应用名称: ${app}`;
                             card.appendChild(cardHeader);
 
                             // 创建折叠面板
@@ -435,15 +261,15 @@
                                         {
                                             label: 'Packet Count',
                                             data: [],
-                                            borderColor: 'rgba(120, 157, 188, 1)',
-                                            backgroundColor: 'rgba(120, 157, 188, 0.2)',
+                                            borderColor: 'rgba(75, 192, 192, 1)',
+                                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
                                             fill: false
                                         },
                                         {
                                             label: 'Bytes',
                                             data: [],
-                                            borderColor: 'rgba(201, 233, 210, 1)',
-                                            backgroundColor: 'rgba(201, 233, 210, 0.2)',
+                                            borderColor: 'rgba(255, 99, 132, 1)',
+                                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
                                             fill: false
                                         }
                                     ]
@@ -509,8 +335,6 @@
         socket.on('connect_error', function(error) {
             console.error('Socket.IO connection error:', error);
         });
-
     </script>
-    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,900" rel="stylesheet">
 </body>
 </html>

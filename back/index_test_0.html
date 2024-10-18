@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实时流量监控 - 星球风格</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #111;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Start screen styling */
+        #start-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-color: #111;
+            z-index: 10;
+        }
+
+        /* Monitor screen styling */
+        #monitor-screen {
+            display: none; /* 初始隐藏 */
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-color: #111;
+            color: #fff;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container { max-width: 1200px; }
+        .card-container { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; }
+        .app-card {
+            flex: 1 0 22%;
+            min-width: 200px;
+            max-width: 280px;
+            background-color: #222;
+            color: #ddd;
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .app-card:hover { transform: scale(1.05); }
+
+        #start-button {
+            padding: 20px 60px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #ffffff;
+            background: linear-gradient(45deg, #ff4d4d, #4da6ff);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+            z-index: 20;
+        }
+        
+        #start-button:hover {
+            background: linear-gradient(45deg, #ff6666, #66b3ff);
+        }
+
+        #end-button {
+            padding: 10px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #fff;
+            background: #ff4d4d;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        #end-button:hover { background: #ff6666; }
+    </style>
+</head>
+<body>
+    <!-- Start Screen -->
+    <div id="start-screen">
+        <p>点击 Start，开始实时流量监控！</p>
+        <button id="start-button">Start</button>
+    </div>
+
+    <!-- Monitor Screen -->
+    <div id="monitor-screen">
+        <div class="container">
+            <h1 class="mb-4">实时流量监控</h1>
+            <h2 class="mb-3">应用列表</h2>
+            <div id="worker-data" class="card-container">
+                <!-- 子线程统计数据将动态填充在这里 -->
+            </div>
+            <button id="end-button">End</button>
+        </div>
+    </div>
+
+    <script>
+        var socket = io({ autoConnect: false });
+        var charts = {};
+
+        // Start按钮点击事件
+        document.getElementById('start-button').addEventListener('click', function() {
+            console.log('Start button clicked');
+            document.getElementById('start-screen').style.display = 'none'; // 隐藏开始屏幕
+            document.getElementById('monitor-screen').style.display = 'flex'; // 显示监控屏幕
+            socket.connect(); // 开始连接socket
+        });
+
+        // End按钮点击事件
+        document.getElementById('end-button').addEventListener('click', function() {
+            socket.disconnect();
+            document.getElementById('monitor-screen').style.display = 'none'; // 隐藏监控屏幕
+            document.getElementById('start-screen').style.display = 'flex'; // 显示开始屏幕
+            alert("监控已停止");
+        });
+
+        // 监听来自后端的 update 事件，显示应用数据
+        socket.on('update', function(data) {
+            console.log('接收到的数据:', data);
+
+            if (data.workers) {
+                var workerDiv = document.getElementById('worker-data');
+                workerDiv.innerHTML = ''; // 清除现有内容
+
+                for (var app in data.workers) {
+                    if (data.workers.hasOwnProperty(app)) {
+                        var appData = data.workers[app];
+
+                        // 创建应用卡片
+                        var appCard = document.createElement('div');
+                        appCard.className = 'app-card';
+                        appCard.textContent = `应用名称: ${app}`;
+                        appCard.addEventListener('click', function() {
+                            alert(`查看 ${app} 的详细信息`); // 简单的点击事件测试
+                        });
+
+                        workerDiv.appendChild(appCard);
+                    }
+                }
+            }
+        });
+
+        // 确认 socket 连接状态
+        socket.on('connect', function() { console.log('Socket.IO connected'); });
+        socket.on('disconnect', function(reason) { console.log('Socket.IO disconnected:', reason); });
+        socket.on('connect_error', function(error) { console.error('Socket.IO connection error:', error); });
+    </script>
+</body>
+</html>

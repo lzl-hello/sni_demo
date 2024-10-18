@@ -5,7 +5,6 @@ import pyshark
 import pandas as pd
 import datetime
 import logging
-import matplotlib.pyplot as plt
 import asyncio
 import nest_asyncio
 import signal
@@ -16,12 +15,19 @@ import os
 import csv
 from queue import Queue, Empty
 from collections import defaultdict
-from matplotlib import font_manager
 from pyshark.capture.capture import TSharkCrashException
 
+"""
+UPDATE THIS
+db_classify_re 数据库使用正则规则存储
+db_classify_traffic 数据库使用字符串存储
+"""
 from db_classify_traffic import classify_traffic_from_db
+# from db_classify_re import classify_traffic_from_db
+
 from worker_thread import WorkerThread
 
+print("------ Network_capture.py Started ! ------")
 # 确保目录存在
 os.makedirs('./log/', exist_ok=True)
 os.makedirs('./output/', exist_ok=True)
@@ -48,7 +54,7 @@ logger.debug("必要的目录已创建或已存在。")
 nest_asyncio.apply()
 
 # 定义要捕获的网络接口，例如 'eth0'、'Wi-Fi' 等
-INTERFACE = r"\Device\NPF_{382B8322-0D2A-47B8-B366-CF6FD3C226C0}"  # 根据实际接口更新
+INTERFACE = "WLAN 2"  # 根据实际接口更新
 
 # 输出CSV文件路径
 OUTPUT_CSV = './output/network_traffic.csv'

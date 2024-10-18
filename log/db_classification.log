@@ -1,6 +1,0 @@
-2024-10-10 16:36:53,927 - db_classify_traffic - WARNING - SNI nav-edge.smartscreen.microsoft.com 没有找到对应的 app_id。
-2024-10-10 16:36:54,011 - db_classify_traffic - DEBUG - SNI 'nav-edge.smartscreen.microsoft.com' 已存在于 unmatched_sni_records 表中，无需重复插入。
-2024-10-10 16:36:54,012 - db_classify_traffic - DEBUG - 数据库连接已关闭。
-2024-10-10 16:37:07,612 - db_classify_traffic - WARNING - SNI api.vc.bilibili.com 没有找到对应的 app_id。
-2024-10-10 16:37:07,692 - db_classify_traffic - DEBUG - SNI 'api.vc.bilibili.com' 已存在于 unmatched_sni_records 表中，无需重复插入。
-2024-10-10 16:37:07,694 - db_classify_traffic - DEBUG - 数据库连接已关闭。

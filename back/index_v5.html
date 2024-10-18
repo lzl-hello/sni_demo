@@ -10,28 +10,15 @@
     <style>
         body, html {
             height: 100%;
-            width:100%;
             margin: 0;
             font-family: 'Montserrat', sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             color: #fff;
+            /*background: linear-gradient(135deg, #f8f8f8, #e1e1e1);*/
             background-image: linear-gradient(to right top, #6d327c, #485DA6, #00a1ba, #00BF98, #36C486);
             background-attachment: fixed;
-            overflow-y:auto;
-        }
-        #body.in{
-            height: 100%;
-            width:100%;
-            margin: 0;
-            font-family: 'Montserrat', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-image:none;
-            background-color = azure;
-            color:#007bff;
         }
         
         /* Centered Content Container */
@@ -39,7 +26,8 @@
             text-align: center;
             position: relative;
             max-width: 1200px;
-            margin-top:-350px;
+            margin-top:-250px;
+            /* padding: 20px; */
         }
 
         .centered-content h1 {
@@ -51,16 +39,20 @@
             font-size: 18px;
             margin-top: 10px;
         }
+
+        /* Arrow pointing to the start button */
         .arrow {
             display: inline-block;
             margin-top: 30px;
-            margin-bottom:50px;
+            margin-bottom:20px;
             border: solid #fff;
             border-width: 0 4px 4px 0;
             padding: 10px;
             transform: rotate(45deg);
             animation: bounce 1s infinite;
         }
+
+        /* Bounce animation for the arrow */
         @keyframes bounce {
             0%, 20%, 50%, 80%, 100% {
                 transform: translateY(0) rotate(45deg);
@@ -72,7 +64,9 @@
                 transform: translateY(-5px) rotate(45deg);
             }
         }
-        #start-button,#end-button{
+
+        /* Start Button */
+        #start-button{
             border:none;
             display: block;
             position: relative;
@@ -95,76 +89,90 @@
             text-transform: uppercase;
         }
         
+        #end-button {
+            padding: 15px 50px;
+            font-size: 22px;
+            font-weight: bold;
+            color: #fff;
+            background-color: #0000CD;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+            display:block;
+            margin:auto;
+        }
+
         #start-button:hover ,#end-button:hover{
             /*background: linear-gradient(45deg, #16a085, #229954);*/
             box-shadow: none;
         }
 
+        /* Navigation */
         nav {
             display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            padding: 15px 20px;
-            /*background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1));*/
+            justify-content: center;
+            padding: 10px;
             background: rgba(255, 255, 255, 0.3);
             width: 100%;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            /*position: absolute;*/
-            position:fixed;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: absolute;
             top: 0;
-            backdrop-filter: blur(10px);
-            z-index: 10;
         }
+
         nav a {
-            position: relative;
-            color: #FFFFFF;
+            margin-right: 20px;
+            padding: 10px 0 0 5px;
+            color: #fff;
             text-decoration: none;
             font-weight: bold;
             font-size: 18px;
             text-transform: uppercase;
-            margin: 0 15px;
-            padding: 5px 0;
-            transition: color 0.3s ease;
+            -webkit-transition: color .2s ease;
+            -o-transition: color .2s ease;
+            transition: color .2s ease;
         }
-
-        nav a:hover {
-            color: #D91656;
+        nav a :hover{
+            background-color:
             text-decoration:none;
         }
-        nav a::before, nav a::after {
+        nav a::after{
+            -webkit-transition: width .2s cubic-bezier(0.29, 0.18, 0.26, 0.83);
+            -o-transition: width .2s cubic-bezier(0.29, 0.18, 0.26, 0.83);
+            transition: width .2s cubic-bezier(0.29, 0.18, 0.26, 0.83);
+            background: #2FFFAD;
+        }
+        nav a::before{
+            -webkit-transition: width .25s cubic-bezier(0.51, 0.18, 0, 0.88) .1s;
+            -o-transition: width .25s cubic-bezier(0.51, 0.18, 0, 0.88) .1s;
+            transition: width .25s cubic-bezier(0.51, 0.18, 0, 0.88) .1s;
+            background: #845EC2;
+        }
+        nav a::after, nav a::before {
             content: '';
             position: absolute;
-            height: 3px;
+            top: calc(100% + 5px);
             width: 0;
-            bottom: 0;
-            background: #D91656;
-            transition: width 0.4s ease-in-out;
-        }
-        
-        nav a::before {
-            left: 0;
-        }
-        
-        nav a::after {
             right: 0;
-        }     
-        nav a:hover::before, nav a:hover::after {
-            width: 50%;
+            height: 3px;
         }
-      
+        nav input[type="text"] {
+            margin-left: auto;
+            padding: 10px;
+            width: 250px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+
+       
+
         #monitor-screen, #start-screen {
             display: none;
             z-index: 1;
         }
         
-        #start-screen.active {
+        #start-screen.active, #monitor-screen.active {
             display: block;
-        }
-        #monitor-screen.active{
-            display: block;
-            max-height: 100%;
-            box-sizing: border-box;
-            margin-top: -200px;
         }
 
         .container { max-width: 1200px; }
@@ -172,22 +180,20 @@
             text-align:center;
         }
         .mb-4{
-            font-family: 'Montserrat', sans-serif;
             margin-block-start: 0.67em;
             margin-block-end: 0.67em;
             margin-inline-start: 0px;
             margin-inline-end: 0px;
             text-align: center;
         }
-
+        /* 炫彩卡片样式 */
         .card {
-            width: 1100px;
+            width: 980px;
             margin-bottom: 20px;
-            /*background-color:#f4f6f6;*/
-            background-color:rgba(254, 249, 242, 0.5);
+            background-color:#f4f6f6;
             color: #4a4453;
             border-radius: 12px;
-            /*padding: 15px;*/
+            padding: 15px;
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
             overflow: hidden;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -209,52 +215,77 @@
         .card-header:hover{
             color:#0000CD;
         }
+        /* 炫彩表格 */
         table {
-            /*background: rgba(254, 249, 242, 1);*/
+            background: rgba(255, 255, 255, 0.1);
             border:none;
             color: #fff;
             width: 100%;
         }
 
-       /* table th, table td {
+        table th, table td {
             padding: 10px;
-            border: 1px solid rgba(255, 227, 227, 1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
             text-align: center;
-        }*/
-        .table thead th ,.table-bordered td, .table-bordered th {
-            border: 1px solid rgba(255, 227, 227, 1);
-            padding: 10px;
         }
+
+        /* 图表容器样式 */
         .chart-container {
             position: relative;
             height: 200px;
             width: 100%;
             margin-top: 15px;
         }
-        #bg-left {
+        .astro.left {
             position: absolute;
             bottom: 0;
             left: 0;
-            width: 100%; /* Adjust as needed */
-            opacity: 1;
         }
-        
-        #bg-left img {
+        .box {
+            display: inline-block;
+            width: 88%;
+        }
+        .fade {
+            opacity: 0;
+            transition: all 0.5s;
+        }
+        .astro img {
             width: 100%;
-            height: auto;
-            mask-image: linear-gradient(to top right, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.4) 30%,  rgba(0, 0, 0, 0.1) 60%, rgba(0, 0, 0, 0) 100%);
-           -webkit-mask-image: linear-gradient(to top right, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.3) 20%, rgba(0, 0, 0, 0.1) 30%, rgba(0, 0, 0, 0) 60%);
-        
-        
+        }
+        @media only screen and (max-height: 600px) {
+            .astro.left img {
+                width: 70%;
+            }
+        }
+        @media only screen and (max-width: 1440px) {
+            .astro {
+                width: 40%;
+            }
+        }
+        @media only screen and (max-width: 1440px) {
+            .box {
+                width: 50%;
+            }
+        }
+        .astro.right {
+            position: absolute;
+            bottom: 0;
+            right: -5%;
+        }
+        @media only screen and (max-height: 650px) {
+            .astro.right {
+                right: 0%;
+            }
+        }
     </style>
 </head>
-<body id="body"> 
+<body>
     <nav>
         <a href="https://github.com/lzl-hello/sni_demo" target="_blank">contact us</a>
-        <a href="https://github.com/lzl-hello/sni_demo/issues" target="_blank">Issue</a>
-        <a href="https://github.com/lzl-hello/sni_demo/blob/master/readme.md">readme</a>
+        <a href="#">Inspiration</a>
+        <a href="#">Jobs</a>
         <a href="#">Go Pro</a>
-       
+        <input type="text" placeholder="Search...">
     </nav>
     <div id="bg-left" class="fade box astro left" style="opacity: 1;">
         <img src="../static/bg-1.jpg" alt="color scheme left">
@@ -282,6 +313,7 @@
     <div id="monitor-screen">
         <div class="container">
             <h1 class="mb-4">实时流量监控信息展示</h1>
+            <!--<h2 class="mb-3">子线程统计数据</h2>-->
             <div id="worker-data" class="table-container">
                 <!-- 子线程统计数据将动态填充在这里 -->
             </div>
@@ -290,7 +322,6 @@
         
         
     </div>
-
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
@@ -318,13 +349,9 @@
                     if (data.status === "started") {
                         document.getElementById('start-screen').classList.remove('active');
                         document.getElementById('monitor-screen').classList.add('active');
-                        document.getElementById('bg-left').style.visibility = 'hidden';
-                        document.getElementById("body").classList.add('in');
-
-                        const navLinks = document.querySelectorAll('nav a');
-                        navLinks.forEach(link => {
-                            link.style.color = "#007bff"; 
-                        });
+                        document.getElementById('bg-left').style.display = 'none';
+                        document.getElementById('bg-right').style.display = 'none';
+                        document.body.style.backgroundColor = "#F5F5F7"
                         socket.connect();
                     }
                 })
@@ -341,12 +368,8 @@
                         socket.disconnect();
                         document.getElementById('monitor-screen').classList.remove('active');
                         document.getElementById('start-screen').classList.add('active');
-                        document.getElementById('bg-left').style.visibility= 'visible';
-                        document.getElementById("body").classList.remove('in');
-                        const navLinks = document.querySelectorAll('nav a');
-                        navLinks.forEach(link => {
-                            link.style.color = "#fff"; 
-                        });
+                        document.getElementById('bg-left').style.display = 'inline-block';
+                        document.getElementById('bg-right').style.display = 'inline-block';
                     }
                 })
                 .catch(error => console.error("Failed to stop monitor:", error));
@@ -380,7 +403,7 @@
                             cardHeader.setAttribute('data-target', `#${collapseId}`);
                             cardHeader.setAttribute('aria-expanded', 'false');
                             cardHeader.setAttribute('aria-controls', collapseId);
-                            cardHeader.textContent = `${app}`;
+                            cardHeader.textContent = `应用名称: ${app}`;
                             card.appendChild(cardHeader);
 
                             // 创建折叠面板
@@ -435,15 +458,15 @@
                                         {
                                             label: 'Packet Count',
                                             data: [],
-                                            borderColor: 'rgba(120, 157, 188, 1)',
-                                            backgroundColor: 'rgba(120, 157, 188, 0.2)',
+                                            borderColor: 'rgba(124, 179, 197, 1)',
+                                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
                                             fill: false
                                         },
                                         {
                                             label: 'Bytes',
                                             data: [],
-                                            borderColor: 'rgba(201, 233, 210, 1)',
-                                            backgroundColor: 'rgba(201, 233, 210, 0.2)',
+                                            borderColor: 'rgba(179, 165, 200, 1)',
+                                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
                                             fill: false
                                         }
                                     ]
@@ -509,7 +532,6 @@
         socket.on('connect_error', function(error) {
             console.error('Socket.IO connection error:', error);
         });
-
     </script>
     <link href="https://fonts.googleapis.com/css?family=Montserrat:400,900" rel="stylesheet">
 </body>

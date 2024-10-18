@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实时流量监控 - 星球风格</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #111;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #start-screen, #monitor-screen {
+            display: none;
+        }
+        
+        #start-screen.active, #monitor-screen.active {
+            display: block;
+        }
+
+        #start-button {
+            padding: 20px 60px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #ffffff;
+            background: linear-gradient(45deg, #ff4d4d, #4da6ff);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        #start-button:hover {
+            background: linear-gradient(45deg, #ff6666, #66b3ff);
+        }
+
+        .container { max-width: 1200px; }
+        .card { margin-bottom: 20px; background-color: #222; color: #ddd; border: none; box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2); }
+        .card-header { background-color: #333; cursor: pointer; padding: 15px; font-weight: bold; border-bottom: 1px solid #444; }
+        .card-header:hover { background-color: #555; }
+        .chart-container { position: relative; height: 200px; width: 100%; }
+        h1, h2 { text-align: center; color: #e1e1e1; }
+        table th, table td { text-align: center; vertical-align: middle; color: #ddd; }
+        .table-container { overflow-x: auto; }
+
+        #end-button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #fff;
+            background: #ff4d4d;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        #end-button:hover {
+            background: #ff6666;
+        }
+    </style>
+</head>
+<body>
+    <div id="start-screen">
+        <button id="start-button">Start</button>
+    </div>
+
+    <div id="monitor-screen">
+        <div class="container">
+            <h1 class="mb-4">实时流量监控</h1>
+            <h2 class="mb-3">子线程统计数据</h2>
+            <div id="worker-data" class="table-container">
+                <!-- 子线程统计数据将动态填充在这里 -->
+            </div>
+            <button id="end-button">End</button>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        var socket = io({ autoConnect: false });
+        var charts = {};
+
+        // 页面加载时检查 localStorage 状态
+        if (localStorage.getItem('monitorStarted') === 'true') {
+            document.getElementById('start-screen').classList.remove('active');
+            document.getElementById('monitor-screen').classList.add('active');
+            socket.connect(); // 如果已经开始监控，则自动连接 socket
+        } else {
+            document.getElementById('start-screen').classList.add('active');
+        }
+
+        // Start按钮点击事件
+        document.getElementById('start-button').addEventListener('click', function() {
+            localStorage.setItem('monitorStarted', 'true');
+            document.getElementById('start-screen').classList.remove('active');
+            document.getElementById('monitor-screen').classList.add('active');
+            socket.connect(); // 点击 Start 按钮时连接 socket
+        });
+
+        // End按钮点击事件
+        document.getElementById('end-button').addEventListener('click', function() {
+            socket.disconnect();
+            localStorage.removeItem('monitorStarted');
+            alert("监控已停止");
+        });
+
+        socket.on('update', function(data) {
+            console.log('接收到的数据:', data);
+
+            if (data.workers) {
+                var workerDiv = document.getElementById('worker-data');
+                workerDiv.innerHTML = ''; // 清除现有内容
+
+                for (var app in data.workers) {
+                    if (data.workers.hasOwnProperty(app)) {
+                        var appData = data.workers[app];
+                        var collapseId = `collapse-${app.replace(/\s+/g, '-')}`;
+                        var chartId = `chart-${app.replace(/\s+/g, '-')}`;
+
+                        var existingCard = document.getElementById(collapseId);
+                        if (!existingCard) {
+                            var card = document.createElement('div');
+                            card.className = 'card';
+
+                            var cardHeader = document.createElement('div');
+                            cardHeader.className = 'card-header';
+                            cardHeader.setAttribute('data-toggle', 'collapse');
+                            cardHeader.setAttribute('data-target', `#${collapseId}`);
+                            cardHeader.setAttribute('aria-expanded', 'false');
+                            cardHeader.setAttribute('aria-controls', collapseId);
+                            cardHeader.textContent = `应用名称: ${app}`;
+                            card.appendChild(cardHeader);
+
+                            var collapseDiv = document.createElement('div');
+                            collapseDiv.id = collapseId;
+                            collapseDiv.className = 'collapse';
+
+                            var cardBody = document.createElement('div');
+                            cardBody.className = 'card-body';
+
+                            var table = document.createElement('table');
+                            table.className = 'table table-bordered table-sm';
+
+                            var thead = document.createElement('thead');
+                            var headerRow = document.createElement('tr');
+                            ['Flow Tuple', 'App Name', 'Packet Count', 'Bytes', 'Current Packet Size', 'Time Since Last Packet'].forEach(function(headerText) {
+                                var th = document.createElement('th');
+                                th.textContent = headerText;
+                                headerRow.appendChild(th);
+                            });
+                            thead.appendChild(headerRow);
+                            table.appendChild(thead);
+
+                            var tbody = document.createElement('tbody');
+                            tbody.id = `tbody-${app}`;
+                            table.appendChild(tbody);
+                            cardBody.appendChild(table);
+
+                            var chartContainer = document.createElement('div');
+                            chartContainer.className = 'chart-container';
+                            var chartCanvas = document.createElement('canvas');
+                            chartCanvas.id = chartId;
+                            chartContainer.appendChild(chartCanvas);
+                            cardBody.appendChild(chartContainer);
+
+                            collapseDiv.appendChild(cardBody);
+                            card.appendChild(collapseDiv);
+                            workerDiv.appendChild(card);
+
+                            var ctx = chartCanvas.getContext('2d');
+                            charts[app] = new Chart(ctx, {
+                                type: 'line',
+                                data: {
+                                    labels: [],
+                                    datasets: [
+                                        {
+                                            label: 'Packet Count',
+                                            data: [],
+                                            borderColor: 'rgba(75, 192, 192, 1)',
+                                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                            fill: false
+                                        },
+                                        {
+                                            label: 'Bytes',
+                                            data: [],
+                                            borderColor: 'rgba(255, 99, 132, 1)',
+                                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                                            fill: false
+                                        }
+                                    ]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    scales: {
+                                        x: {
+                                            title: { display: true, text: 'Packet Number' }
+                                        },
+                                        y: {
+                                            title: { display: true, text: 'Value' },
+                                            beginAtZero: true
+                                        }
+                                    }
+                                }
+                            });
+                        }
+
+                        var tableBody = document.getElementById(`tbody-${app}`);
+                        tableBody.innerHTML = '';
+
+                        var tr = document.createElement('tr');
+                        ['flow_tuple', 'app_name', 'packet_count', 'bytes', 'current_packet_size', 'time_since_last_packet'].forEach(function(key) {
+                            var td = document.createElement('td');
+                            td.textContent = appData[key];
+                            tr.appendChild(td);
+                        });
+                        tableBody.appendChild(tr);
+
+                        var history = data.history[app];
+                        if (history && charts[app]) {
+                            charts[app].data.labels = history.packet_count.map((_, index) => index + 1);
+                            charts[app].data.datasets[0].data = history.packet_count;
+                            charts[app].data.datasets[1].data = history.bytes;
+                            charts[app].update();
+                        }
+                    }
+                }
+            }
+        });
+
+        socket.on('connect', function() {
+            console.log('Socket.IO connected');
+        });
+
+        socket.on('disconnect', function(reason) {
+            console.log('Socket.IO disconnected:', reason);
+        });
+
+        socket.on('connect_error', function(error) {
+            console.error('Socket.IO connection error:', error);
+        });
+    </script>
+</body>
+</html>

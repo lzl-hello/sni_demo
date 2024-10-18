@@ -1,6 +1,7 @@
 # db_classify_traffic.py
 import psycopg2
 import logging
+import re
 
 # 设置 db_classify_traffic 的日志记录器
 logger = logging.getLogger('db_classify_traffic')
@@ -45,26 +46,29 @@ def classify_traffic_from_db(sni, protocol):
 
         # 如果存在 SNI，尝试查找对应的 app_id
         if sni:
-            cursor.execute("SELECT app_id FROM app_sni WHERE sni = %s", (sni,))
-            app_id_result = cursor.fetchone()
+            # 使用正则表达式匹配 SNI
+            # cursor.execute("SELECT app_id FROM app_sni WHERE %s ~ sni", (sni,))
+            cursor.execute("SELECT app_name FROM sni_re WHERE %s ~ sni_re", (sni,))
+            app_name_result = cursor.fetchone()
 
-            if app_id_result:
-                app_id = app_id_result[0]
-                cursor.execute("SELECT app_name FROM app_protocol WHERE app_id = %s", (app_id,))
-                app_name_result = cursor.fetchone()
+            if app_name_result:
+                # app_id = app_id_result[0]
+                # cursor.execute("SELECT app_name FROM app_protocol WHERE app_id = %s", (app_id,))
+                app_name = app_name_result[0]
 
-                if app_name_result:
-                    app_name = app_name_result[0]
-                    logger.debug(f"SNI {sni} 对应的应用名称: {app_name}")
-                    return f"{app_name} Traffic", app_name
-                else:
-                    logger.warning(f"SNI {sni} 对应的 app_id {app_id} 没有找到应用名称。")
-                    return "Unknown App Traffic", "Unknown App"
+                # if app_name_result:
+                #     app_name = app_name_result[0]
+                logger.debug(f"SNI {sni} 对应的应用名称: {app_name}")
+                return f"{app_name} Traffic", app_name
             else:
-                logger.warning(f"SNI {sni} 没有找到对应的 app_id。")
-                # 插入未匹配的 SNI 记录
-                insert_unmatched_sni(sni)
-                return "Other SNI Traffic", "Other SNI"
+                logger.warning(f"SNI {sni} 没有找到应用名称。")
+                return "Unknown App Traffic", "Unknown App"
+            # else:
+            #     logger.warning(f"SNI {sni} 没有找到对应的 app_id。")
+            #     # 插入未匹配的 SNI 记录
+            #     insert_unmatched_sni(sni)
+            #     return "Other SNI Traffic", "Other SNI"
+
         else:
             # 如果没有 SNI，根据协议分类
             if protocol == 'HTTP':
