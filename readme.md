@@ -49,6 +49,7 @@
 重要功能：
 1. **前端页面美化**
    - 前端页面初步展示已完成，需要美化页面样式和布局，增加更多交互功能。
+   - 初步美化已经完成
 
 2. **数据库集成增强**
    - 支持更多数据库和更复杂的分类逻辑；支持更多应用的sni分类。人工标记和自动分类的结合。
@@ -92,6 +93,12 @@
    - **解决方案**：采用 flask_socketio 提供的 background 运行 + 队列 flush 法。
    - **参考**：https://blog.csdn.net/qq_21567385/article/details/120803123
 
+## 待解决的Bug
+
+1. **前端展示问题**
+   - **问题**：表格中的实际数据与CSV文件中的数据不匹配、页面滑动问题
+   - **解决方案**：
+
 ## 安装指南
 
 ### 前提条件
@@ -102,6 +109,25 @@
   
 - **PostgreSQL数据库**
   - 需要一个运行中的PostgreSQL实例，并创建必要的表（`app_sni` 、 `app_protocol`、 `unmatched_sni_record`）用于流量分类。
+  - clone本项目后请修改db模块的数据库连接信息
+
+- **项目运行**
+  - 克隆本项目：
+    ```bash
+    git clone git@github.com:lzl-hello/sni_demo.git
+    ```
+  - 使用 `pip` 安装项目所需的Python依赖包。
+    ```bash
+    pip install -r requirements.txt
+    ```
+  - 运行 `network_capture.py` 开始捕获和处理网络流量。
+    ```bash
+    python network_capture.py
+    ```
+  - 打开网页查看统计信息
+    ```bash
+    http://localhost:5000/
+    ```
 
 
 ## 项目结构
@@ -129,6 +155,7 @@ network-traffic-sni-capture/
 │   ├── app_sni.sql
 │   ├── app_protocol.sql
 │   └── readme.md
+├── static/                     # 图片                     
 ├── back/                       # 简单的备份代码
 └── pcap/                       # （已移除）之前用于存储PCAP文件的目录
 ```
