@@ -17,9 +17,9 @@ if not logger.handlers:
 
 # 数据库连接配置
 db_config = {
-    'dbname': 'sni_classification',
+    'dbname': 'postgres',
     'user': 'postgres',
-    'password': 'hitlhx123',
+    'password': 'root',
     'host': 'localhost',
     'port': '5432'
 }
