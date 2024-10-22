@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>实时流量监控 - 可用，样式待修改</title>
+    <title>实时流量监控</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -30,8 +30,9 @@
             justify-content: center;
             align-items: center;
             background-image:none;
-            background-color = azure;
+            background-color:azure;
             color:#007bff;
+            font-weight: bold;
         }
         
         /* Centered Content Container */
@@ -164,7 +165,7 @@
             display: block;
             max-height: 100%;
             box-sizing: border-box;
-            margin-top: -200px;
+            margin-top: -300px;
         }
 
         .container { max-width: 1200px; }
@@ -178,6 +179,8 @@
             margin-inline-start: 0px;
             margin-inline-end: 0px;
             text-align: center;
+            font-weight:bold;
+            padding-top:200px;
         }
 
         .card {
@@ -204,10 +207,10 @@
             padding: 15px;
             font-weight: bold;
             font-size: 18px;
-            color: #4a4453;
+
         }
         .card-header:hover{
-            color:#0000CD;
+            color:#007bff;
         }
         table {
             /*background: rgba(254, 249, 242, 1);*/
@@ -244,7 +247,7 @@
             height: auto;
             mask-image: linear-gradient(to top right, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.4) 30%,  rgba(0, 0, 0, 0.1) 60%, rgba(0, 0, 0, 0) 100%);
            -webkit-mask-image: linear-gradient(to top right, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.3) 20%, rgba(0, 0, 0, 0.1) 30%, rgba(0, 0, 0, 0) 60%);
-        
+        }
         
     </style>
 </head>
@@ -252,7 +255,7 @@
     <nav>
         <a href="https://github.com/lzl-hello/sni_demo" target="_blank">contact us</a>
         <a href="https://github.com/lzl-hello/sni_demo/issues" target="_blank">Issue</a>
-        <a href="https://github.com/lzl-hello/sni_demo/blob/master/readme.md">readme</a>
+        <a href="https://github.com/lzl-hello/sni_demo/blob/master/readme.md" target="_blank">readme</a>
         <a href="#">Go Pro</a>
        
     </nav>
@@ -494,7 +497,17 @@
                 }
             }
         });
-        
+        document.querySelectorAll('.card-header').forEach(function(header) {
+            header.addEventListener('click', function(e) {
+                const currentScroll = window.scrollY; // Get the current scroll position
+    
+                // Allow the default toggle action for the collapse behavior
+                setTimeout(function() {
+                    // After the card collapses/expands, scroll back to the previous position
+                    window.scrollTo(0, currentScroll);
+                }, 300); // Adjust the delay to match the animation duration
+            });
+        });
         
         
 

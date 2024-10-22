@@ -95,23 +95,23 @@ def stop_monitor():
     logger.info("------ End network_capture.py. ------")
     return jsonify({"status": "stopped"})
 
-def read_worker_csv():
-    global last_main_csv_line
-    data = []
-    if os.path.isfile(MAIN_CSV):
-        try:
-            with open(MAIN_CSV, 'r', newline='', encoding='utf-8') as f:
-                reader = csv.DictReader(f)
-                for i, row in enumerate(reader):
-                    if i >= last_main_csv_line:
-                        data.append(row)
-                last_main_csv_line = i + 1 if 'i' in locals() else 0
-            logger.debug(f"读取主 CSV 数据: {data}")
-        except Exception as e:
-            logger.error(f"读取主 CSV 失败: {e}")
-    else:
-        logger.warning(f"主 CSV 文件不存在: {MAIN_CSV}")
-    return data
+# def read_worker_csv():
+#     global last_main_csv_line
+#     data = []
+#     if os.path.isfile(MAIN_CSV):
+#         try:
+#             with open(MAIN_CSV, 'r', newline='', encoding='utf-8') as f:
+#                 reader = csv.DictReader(f)
+#                 for i, row in enumerate(reader):
+#                     if i >= last_main_csv_line:
+#                         data.append(row)
+#                 last_main_csv_line = i + 1 if 'i' in locals() else 0
+#             logger.debug(f"读取主 CSV 数据: {data}")
+#         except Exception as e:
+#             logger.error(f"读取主 CSV 失败: {e}")
+#     else:
+#         logger.warning(f"主 CSV 文件不存在: {MAIN_CSV}")
+#     return data
 
 def read_worker_csv():
     data = {}
